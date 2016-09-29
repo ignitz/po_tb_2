@@ -5,14 +5,6 @@
 #include <cassert>
 #include <algorithm>
 
-class Graph {
-private:
-    /* data */
-public:
-
-};
-
-
 using graph = std::vector<std::vector<char>>;
 
 void init_jobs(std::unordered_map<std::string, size_t>& jobs);
