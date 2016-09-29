@@ -4,14 +4,14 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
+#include <map>
 
-class Graph {
-private:
-    /* data */
-public:
-
-};
-
+// class Graph {
+// private:
+//
+// public:
+//
+// };
 
 using graph = std::vector<std::vector<char>>;
 
@@ -19,9 +19,11 @@ void init_jobs(std::unordered_map<std::string, size_t>& jobs);
 void init_time(std::vector<double>& time, const std::unordered_map<std::string, size_t>& jobs);
 void init_graph(graph& g, const std::unordered_map<std::string, size_t>& jobs);
 
+void heuro_doidao(std::vector<double>&, graph&);
+
 void bruteforce(std::vector<double>& time, graph& g);
 
-int main(int argc, char **argv) {
+int main() {
 	std::unordered_map<std::string, size_t> jobs;
 	init_jobs(jobs);
 	//for(auto& it: jobs) std::cout<<it.first<<' '<<it.second<<'\n';
@@ -33,11 +35,37 @@ int main(int argc, char **argv) {
 	graph g(jobs.size());
 	init_graph(g, jobs);
 
-	//bruteforce(time, g);
+    std::cout << "/* message */" << std::endl;
+    //bruteforce(time, g);
+    heuro_doidao(time, g);
+}
+
+void heuro_doidao(std::vector<double>& time, graph& g) {
+
+    std::map<int, size_t> degree;
+    for (size_t i = 0; i < g.size(); i++) {
+        int x=0;
+        for (size_t j = 0; j < g[i].size() ; j++) {
+            if(j == i) continue;
+            x += !g[i][j];
+        }
+        degree[i] = x;
+        //std::cout << degree[i] << '\n';
+    }
+
+    while (!degree.empty()) {
+        auto last = degree.erase(--degree.end());
+        size_t vertex = last->second;
+        for(auto it = degree.begin(); it != degree.end(); ++it) {
+
+        }
+    }
+
 
 
 }
 
+/*
 void bruteforce(std::vector<double>& time, graph& g){
 	std::vector<size_t> pos(time.size());
 	std::vector<double> init_time(time.size());
@@ -49,7 +77,7 @@ void bruteforce(std::vector<double>& time, graph& g){
 
 	} while (std::next_permutation(pos.begin(), pos.end()));
 }
-
+*/
 void init_jobs(std::unordered_map<std::string, size_t>& jobs) {
 	std::string buf;
 	//set JOBS :=
