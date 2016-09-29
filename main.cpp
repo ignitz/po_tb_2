@@ -57,7 +57,9 @@ void heuro_doidao(std::vector<double>& time, graph& g) {
         auto last = degree.erase(--degree.end());
         size_t vertex = last->second;
         for(auto it = degree.begin(); it != degree.end(); ++it) {
+            if (it->second == vertex) {
 
+            }
         }
     }
 
