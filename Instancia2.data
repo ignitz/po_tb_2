@@ -1,0 +1,14 @@
+set J := A, B, C, D, E, F;
+set E :=  A B, C F, C E, E F, F D;
+
+param d  :=
+	A	7
+	B	5
+	C	3
+	D	2	
+	E	4
+	F	2	;
+
+param M := 24;
+
+end;

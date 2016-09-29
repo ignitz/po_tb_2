@@ -6,13 +6,7 @@
 #include <algorithm>
 #include <map>
 
-// class Graph {
-// private:
 //
-// public:
-//
-// };
-
 using graph = std::vector<std::vector<char>>;
 
 void init_jobs(std::unordered_map<std::string, size_t>& jobs);
