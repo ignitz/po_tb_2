@@ -1,0 +1,38 @@
+set JOBS := A, B, C, D, E, F;
+
+
+param TIME  :=
+	A	7
+	B	5
+	C	3
+	D	2	
+	E	4
+	F	2	;
+	
+set INCOMP :=  A B, C F, C E, E F, F D;
+
+
+end;
+
+/*
+set JOBS := A B C D E F;
+
+param TIME :=
+A 1
+B 1
+C 1
+D 1
+E 1
+F 1;
+
+
+set INCOMP :=
+A B,
+C E,
+C F,
+D F,
+E F;
+
+
+end;
+*/

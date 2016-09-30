@@ -1,80 +1,106 @@
 #include <iostream>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <cassert>
-#include <algorithm>
-#include <map>
+#include <set>
 
-//
-using graph = std::vector<std::vector<char>>;
+using time_type = double;
+// O ideal seria ser utilizado um BITSET ao inves do SET, mas
+// na biblioteca padrao do c++ nao tem
+using graph = std::vector<std::set<size_t>>;
 
-void init_jobs(std::unordered_map<std::string, size_t>& jobs);
-void init_time(std::vector<double>& time, const std::unordered_map<std::string, size_t>& jobs);
-void init_graph(graph& g, const std::unordered_map<std::string, size_t>& jobs);
+void init_jobs(std::unordered_map<std::string, size_t>& job_id,
+		std::unordered_map<size_t, std::string>& id_job);
+void init_time(std::vector<time_type>& time, const std::unordered_map<std::string, size_t>& job_id);
+void init_graph(graph& g, const std::unordered_map<std::string, size_t>& job_id);
 
-void heuro_doidao(std::vector<double>&, graph&);
+void bruteforce(std::vector<time_type>& time, graph& g);
+void heuristic(std::vector<time_type>& time, graph& g, std::vector<std::pair<size_t, time_type>>& answer);
 
-void bruteforce(std::vector<double>& time, graph& g);
 
-int main() {
-	std::unordered_map<std::string, size_t> jobs;
-	init_jobs(jobs);
-	//for(auto& it: jobs) std::cout<<it.first<<' '<<it.second<<'\n';
+int main(int argc, char **argv) {
+	std::unordered_map<std::string, size_t> job_id;
+	std::unordered_map<size_t, std::string> id_job;
+	init_jobs(job_id, id_job);
+	//for(auto& it: job_id) std::cout<<it.first<<' '<<it.second<<std::endl;
 
-	std::vector<double> time(jobs.size());
-	init_time(time, jobs);
+	std::vector<time_type> time(job_id.size());
+	init_time(time, job_id);
 	//for(auto& it: time) std::cout<<it<<'\n';
+	//std::cout<<"aqui"<<std::endl;
+	graph g(job_id.size());
+	init_graph(g, job_id);
 
-	graph g(jobs.size());
-	init_graph(g, jobs);
-
-    std::cout << "/* message */" << std::endl;
-    //bruteforce(time, g);
-    heuro_doidao(time, g);
+	std::vector<std::pair<size_t, time_type>> answer;
+	heuristic(time, g, answer);
+	for (auto& it: answer) std::cout << id_job[it.first]<<' '<<it.second<<'\n';
+	//std::cout<<answer.back().second+time[answer.back().first]<<'\n';
 }
 
-void heuro_doidao(std::vector<double>& time, graph& g) {
-
-    std::map<int, size_t> degree;
-    for (size_t i = 0; i < g.size(); i++) {
-        int x=0;
-        for (size_t j = 0; j < g[i].size() ; j++) {
-            if(j == i) continue;
-            x += !g[i][j];
-        }
-        degree[i] = x;
-        //std::cout << degree[i] << '\n';
-    }
-
-    while (!degree.empty()) {
-        auto last = degree.erase(--degree.end());
-        size_t vertex = last->second;
-        for(auto it = degree.begin(); it != degree.end(); ++it) {
-            if (it->second == vertex) {
-
-            }
-        }
-    }
-
-
-
+bool overlap(std::set<size_t> setA, std::set<size_t> setB) {
+	auto it1 = setA.begin();
+	auto it2 = setB.begin();
+	if (it1 == setA.end() || it2 == setB.end()) return false;
+	while (true) {
+		while (*it1 < *it2) {
+			++it1;
+			if (it1 == setA.end()) return false;
+		}
+		if (*it1 == *it2) return true;
+		++it2;
+		if (it2 == setB.end()) return false;
+	}
+	return false;
 }
 
-/*
-void bruteforce(std::vector<double>& time, graph& g){
-	std::vector<size_t> pos(time.size());
-	std::vector<double> init_time(time.size());
-	for(size_t i=0; i<pos.size(); ++i) pos[i]=i;
+void heuristic(std::vector<time_type>& time, graph& g, std::vector<std::pair<size_t, time_type>>& answer){
+	std::set<size_t> to_execute;
+	for(size_t i=0; i<time.size(); ++i) to_execute.insert(i);
+	std::multimap<time_type, size_t> executing_time;
+	std::set<size_t> executing;
+	time_type current_time = 0;
 
-	do {
-		for(size_t i=0; i<pos.size(); ++i) std::cout<<pos[i]<<' ';
-	std::cout<<'\n';
-
-	} while (std::next_permutation(pos.begin(), pos.end()));
+	while (!to_execute.empty()) {
+		std::multimap<int, size_t> degree;
+		for (auto& it: to_execute) {
+			degree.insert(std::make_pair(g[it].size(), it));
+		}
+		for (auto& it: degree) {
+			//vai pegando o cara com menos dependencias e que pode executar
+			size_t A = it.second;
+			if (!overlap(executing, g[A])) {
+				to_execute.erase(to_execute.find(A));
+				executing_time.insert(std::make_pair(current_time+time[A], A));
+				executing.insert(A);
+			}
+		}
+		//tira o primeiro a acabar de executar. outros podem acabar ao mesmo tempo
+		std::pair<time_type, size_t> exit_pair = *(executing_time.begin());
+		current_time = exit_pair.first;
+		while (current_time >= exit_pair.first) {
+			executing_time.erase(executing_time.begin());
+			executing.erase(executing.find(exit_pair.second));
+			for (auto& it: g) it.insert(exit_pair.second);
+			answer.push_back(std::make_pair(exit_pair.second, exit_pair.first));
+			if(executing_time.empty()) break;
+			exit_pair = *(executing_time.begin());
+		}
+	}
+	//esvazia a fila dos executando
+	while (!executing_time.empty()) {
+		auto exit_pair = *(executing_time.begin());
+		executing_time.erase(executing_time.begin());
+		executing.erase(executing.begin());
+		current_time = exit_pair.first;
+		for (auto& it: g) it.insert(exit_pair.second);
+		answer.push_back(std::make_pair(exit_pair.second, exit_pair.first));
+	}
 }
-*/
-void init_jobs(std::unordered_map<std::string, size_t>& jobs) {
+
+void init_jobs(std::unordered_map<std::string, size_t>& job_id,
+		std::unordered_map<size_t, std::string>& id_job) {
 	std::string buf;
 	//set JOBS :=
 	std::cin >> buf >> buf >> buf;
@@ -85,29 +111,30 @@ void init_jobs(std::unordered_map<std::string, size_t>& jobs) {
 			buf.erase(buf.end()-1);
 			cont = false;
 		}
-		jobs[buf] = i;
+		if (buf.back() == ',') buf.erase(buf.end()-1);
+		job_id[buf] = i;
+		id_job[i] = buf;
 		++i;
 		if(!cont) break;
 	}
 }
 
-void init_time(std::vector<double>& time, const std::unordered_map<std::string, size_t>& jobs){
+void init_time(std::vector<time_type>& time, const std::unordered_map<std::string, size_t>& job_id){
 	std::string buf;
 	//param TIME :=
 	std::cin >> buf >> buf >> buf;
-	double t;
+	time_type t;
 	while (std::cin >> buf) {
 		if ( buf == ";") break;
 		std::cin >> t;
-		size_t place = jobs.at(buf);
+		size_t place = job_id.at(buf);
 		assert(place < time.size());
 		time[place] = t;
 	}
 }
 
-void init_graph(graph& g, const std::unordered_map<std::string, size_t>& jobs){
+void init_graph(graph& g, const std::unordered_map<std::string, size_t>& job_id){
 	std::string buf, buf2;
-	for (auto& it: g) it.resize(jobs.size());
 
 	//set INCOMP :=
 	std::cin >> buf >> buf >> buf;
@@ -119,9 +146,9 @@ void init_graph(graph& g, const std::unordered_map<std::string, size_t>& jobs){
 		}
 		if (buf2.back() == ',') buf2.erase(buf2.end()-1);
 
-		size_t i = jobs.at(buf), j = jobs.at(buf2);
-		g[i][j] = 1;
-		g[j][i] = 1;
+		size_t i = job_id.at(buf), j = job_id.at(buf2);
+		g[i].insert(j);
+		g[j].insert(i);
 		if(!cont) break;
 	}
 }
